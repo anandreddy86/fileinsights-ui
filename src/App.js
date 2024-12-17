@@ -3,16 +3,24 @@ import axios from "axios";
 import './App.css';
 
 function App() {
+  const [activeTab, setActiveTab] = useState("process"); // Manage active tab
   const [folderPath, setFolderPath] = useState("");
+  const [fetchPath, setFetchPath] = useState(""); // Path input for Find Metadata
   const [metadata, setMetadata] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [metadataVisible, setMetadataVisible] = useState(false);  // To control visibility
 
+  // Handle folder path input change for "Process Folder"
   const handleFolderPathChange = (e) => {
     setFolderPath(e.target.value);
   };
 
+  // Handle folder path input change for "Find Metadata"
+  const handleFetchPathChange = (e) => {
+    setFetchPath(e.target.value);
+  };
+
+  // API call to process the folder
   const processFolder = async () => {
     setLoading(true);
     setError("");
@@ -22,7 +30,7 @@ function App() {
       });
       if (response.status === 200) {
         console.log("Folder processed successfully");
-        fetchMetadata(); // Fetch metadata after processing folder
+        setError("Folder processed successfully!");
       }
     } catch (err) {
       setError("Error processing folder.");
@@ -31,16 +39,24 @@ function App() {
     setLoading(false);
   };
 
+  // API call to get metadata for the specified path
   const fetchMetadata = async () => {
     setLoading(true);
     setError("");
+    setMetadata([]);
     try {
+      if (!fetchPath) {
+        setError("Please enter a folder path to fetch metadata.");
+        setLoading(false);
+        return;
+      }
       const response = await axios.get('http://localhost:8080/api/files/metadata', {
-        params: { folderPath }
+        params: { folderPath: fetchPath }
       });
-      if (response.data) {
-        setMetadata(response.data); // Set metadata to state
-        setMetadataVisible(true);  // Show metadata once fetched
+      if (response.data && response.data.length > 0) {
+        setMetadata(response.data);
+      } else {
+        setError("No metadata found for the specified folder path.");
       }
     } catch (err) {
       setError("Error fetching metadata.");
@@ -52,55 +68,68 @@ function App() {
   return (
     <div className="App">
       <h1>File Insights</h1>
-
-      <div>
-        <input
-          type="text"
-          value={folderPath}
-          onChange={handleFolderPathChange}
-          placeholder="Enter folder path"
-        />
-      </div>
-
-      <div>
-        <button onClick={processFolder} disabled={loading}>
-          {loading ? "Processing..." : "Process Folder"}
+      
+      {/* Tabs Navigation */}
+      <div className="tabs">
+        <button 
+          className={`tab ${activeTab === "process" ? "active" : ""}`} 
+          onClick={() => setActiveTab("process")}
+        >
+          Process Folder
+        </button>
+        <button 
+          className={`tab ${activeTab === "metadata" ? "active" : ""}`} 
+          onClick={() => setActiveTab("metadata")}
+        >
+          Find Metadata
         </button>
       </div>
 
-      {error && <div className="error">{error}</div>}
-
-      {/* Button or Tab for Finding Metadata */}
-      <div>
-        {metadataVisible && (
-          <button onClick={() => setMetadataVisible(false)}>
-            Hide Metadata
-          </button>
+      {/* Tab Content */}
+      <div className="tab-content">
+        {/* Process Folder Tab */}
+        {activeTab === "process" && (
+          <div>
+            <h2>Process Folder</h2>
+            <input
+              type="text"
+              value={folderPath}
+              onChange={handleFolderPathChange}
+              placeholder="Enter folder path"
+            />
+            <button onClick={processFolder} disabled={loading}>
+              {loading ? "Processing..." : "Process Folder"}
+            </button>
+            {error && <div className="error">{error}</div>}
+          </div>
         )}
-        {!metadataVisible && (
-          <button onClick={fetchMetadata}>
-            Find Metadata
-          </button>
+
+        {/* Find Metadata Tab */}
+        {activeTab === "metadata" && (
+          <div>
+            <h2>Find Metadata</h2>
+            <input
+              type="text"
+              value={fetchPath}
+              onChange={handleFetchPathChange}
+              placeholder="Enter folder path to find metadata"
+            />
+            <button onClick={fetchMetadata} disabled={loading}>
+              {loading ? "Fetching..." : "Find Metadata"}
+            </button>
+            {error && <div className="error">{error}</div>}
+            {metadata.length > 0 && (
+              <ul>
+                {metadata.map((file, index) => (
+                  <li key={index}>
+                    <strong>{file.name}</strong> - Size: {file.size} bytes
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </div>
-
-      {/* Display Metadata */}
-      {metadataVisible && (
-        <div>
-          <h2>Metadata for Folder: {folderPath}</h2>
-          {metadata.length > 0 ? (
-            <ul>
-              {metadata.map((file, index) => (
-                <li key={index}>
-                  <strong>{file.name}</strong> - Size: {file.size} bytes
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p>No metadata found.</p>
-          )}
-        </div>
-      )}
     </div>
   );
 }
