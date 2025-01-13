@@ -1,151 +1,174 @@
-.App {
+/* General Styles */
+body {
   font-family: Arial, sans-serif;
-  margin: 20px;
+  margin: 0;
+  padding: 0;
+  background-color: #f9f9f9;
+  color: #333;
+  line-height: 1.6;
+}
+
+h1 {
   text-align: center;
+  margin: 20px 0;
+  font-size: 2.5rem;
+  color: #444;
 }
 
-input {
-  margin: 10px;
-  padding: 8px;
-  width: 300px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  transition: border-color 0.3s ease;
+h2 {
+  font-size: 2rem;
+  margin: 20px 0;
+  text-align: center;
+  color: #555;
 }
 
-input:focus {
-  border-color: #007bff;
-  outline: none;
+h3 {
+  font-size: 1.5rem;
+  margin: 20px 0;
+  text-align: center;
+  color: #666;
 }
 
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Navigation Tabs */
 button {
-  padding: 8px 16px;
-  margin: 10px;
-  cursor: pointer;
-  border-radius: 4px;
+  padding: 10px 20px;
+  margin: 0 10px;
   border: none;
+  border-radius: 5px;
+  font-size: 1rem;
   background-color: #007bff;
   color: white;
-  font-weight: bold;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
-button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  background-color: #ccc;
-}
-
-button:hover:not(:disabled) {
+button:hover {
   background-color: #0056b3;
-  transform: scale(1.05);
+  transform: translateY(-2px);
 }
 
-.tabs {
+button.active {
+  background-color: #0056b3;
+  font-weight: bold;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Input Field */
+input[type="text"],
+input[type="search"] {
+  width: 80%;
+  padding: 12px;
+  margin: 10px auto;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+  display: block;
+  max-width: 600px;
+}
+
+/* Aligning the radio buttons */
+.metadata-options {
   display: flex;
-  justify-content: center;
+  justify-content: space-evenly;
   margin-bottom: 20px;
 }
 
-.tab {
-  background-color: #f1f1f1;
-  border: 1px solid #ccc;
-  padding: 10px 20px;
-  cursor: pointer;
-  font-weight: bold;
-  border-radius: 4px;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+.metadata-options label {
+  font-size: 1rem;
 }
 
-.tab.active {
-  background-color: #007bff;
-  color: white;
-  border: 1px solid #007bff;
+/* Table Styles */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
 }
 
-.tab:hover {
-  background-color: #f0f0f0;
-  transform: scale(1.05);
-}
-
-.tab-content {
+table, th, td {
   border: 1px solid #ddd;
-  padding: 20px;
-  border-radius: 4px;
+}
+
+th, td {
+  padding: 12px;
+  text-align: left;
+  font-size: 1rem;
+}
+
+th {
+  background-color: #f4f4f4;
+  color: #333;
+}
+
+tr:nth-child(even) {
   background-color: #f9f9f9;
 }
 
-.error {
-  color: red;
-  margin-top: 10px;
-  font-size: 14px;
+tr:hover {
+  background-color: #e9ecef;
 }
 
-table {
-  width: 100%;
-  margin-top: 20px;
-  border-collapse: collapse;
-  text-align: left;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-table th,
-table td {
-  padding: 12px;
-  border: 1px solid #ddd;
-}
-
-table th {
-  background-color: #f4f4f4;
-  font-weight: bold;
-}
-
-table td {
-  font-size: 14px;
-}
-
-table tr:hover {
-  background-color: #f1f1f1;
-}
-
-table td {
-  word-break: break-word;
-}
-
+/* Responsive Table */
 @media (max-width: 768px) {
-  input {
-    width: 80%;
-  }
-
-  button {
-    width: 80%;
-  }
-
   table {
-    font-size: 12px;
-    overflow-x: auto;
+    font-size: 0.9rem;
   }
 
-  table th, table td {
+  th, td {
     padding: 8px;
   }
-}
 
-@media (max-width: 480px) {
-  input {
+  input[type="text"],
+  input[type="search"] {
+    font-size: 0.9rem;
     width: 100%;
   }
 
   button {
+    font-size: 1rem;
     width: 100%;
   }
+}
 
-  .tabs {
-    flex-direction: column;
-    align-items: center;
-  }
+/* Chart Styling */
+canvas {
+  max-width: 100%;
+  margin: 20px auto;
+}
 
-  .tab {
-    margin-bottom: 10px;
+/* Responsive Design for Charts */
+@media (max-width: 768px) {
+  canvas {
+    max-width: 95%;
+    height: auto;
   }
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  padding: 10px 0;
+  background-color: #007bff;
+  color: white;
+  position: fixed;
+  width: 100%;
+  bottom: 0;
+  font-size: 0.9rem;
+}
+
+/* Accessibility Enhancements */
+button:focus {
+  outline: 2px solid #0056b3;
+  outline-offset: 2px;
+}
+
+input:focus {
+  outline: 2px solid #007bff;
+  outline-offset: 2px;
 }

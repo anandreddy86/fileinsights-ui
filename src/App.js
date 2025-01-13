@@ -1,292 +1,334 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
-import './App.css';
+import { Pie, Bar } from "react-chartjs-2";
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend } from 'chart.js';
+import "./App.css";
+
+// Register necessary Chart.js components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  ArcElement, // Register ArcElement for pie charts
+  Title,
+  Tooltip,
+  Legend
+);
 
 function App() {
   const [activeTab, setActiveTab] = useState("process");
   const [folderPath, setFolderPath] = useState("");
-  const [fetchPath, setFetchPath] = useState(""); // Path input for Find Metadata
-  const [deletePath, setDeletePath] = useState(""); // Path input for Delete Metadata
+  const [fetchPath, setFetchPath] = useState("");
+  const [deletePath, setDeletePath] = useState("");
   const [metadataType, setMetadataType] = useState("basic");
   const [metadata, setMetadata] = useState([]);
+  const [fileAgeData, setFileAgeData] = useState({});
+  const [fileTypeData, setFileTypeData] = useState({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
+  const [expandedRows, setExpandedRows] = useState([]);
 
-  // Handle folder path input change for "Process Folder"
-  const handleFolderPathChange = (e) => setFolderPath(e.target.value);
+  const fetchAnalyticsData = useCallback(async () => {
+    setLoading(true);
+    resetStates();
+    try {
+      const ageResponse = await axios.get("http://localhost:8080/api/analytics/by-age");
+      const typeResponse = await axios.get("http://localhost:8080/api/analytics/by-type");
+      setFileAgeData(ageResponse.data);
+      setFileTypeData(typeResponse.data);
+    } catch (err) {
+      setError("Error fetching analytics data.");
+    } finally {
+      setLoading(false);
+    }
+  }, []); 
 
-  // Handle folder path input change for "Find Metadata"
-  const handleFetchPathChange = (e) => setFetchPath(e.target.value);
-
-  // Handle folder path input change for "Delete Metadata"
-  const handleDeletePathChange = (e) => setDeletePath(e.target.value);
-
-  // Reset metadata when changing between Basic and Advanced metadata types
   useEffect(() => {
-    setMetadata([]); // Clear metadata when changing tab
-  }, [metadataType]);
+    if (activeTab === "analytics") {
+      fetchAnalyticsData();
+    } else {
+      resetStates();
+    }
+  }, [activeTab, fetchAnalyticsData]);
 
-  // API call to process the folder
+  const resetStates = () => {
+    setMetadata([]);
+    setError("");
+    setSuccessMessage("");
+    setFileAgeData({});
+    setFileTypeData({});
+  };
+
   const processFolder = async () => {
     setLoading(true);
-    setError("");
-    setSuccessMessage("");
+    resetStates();
     try {
-      const response = await axios.post('http://localhost:8080/api/files/process', null, {
-        params: { folderPath }
+      const response = await axios.post("http://localhost:8080/api/files/process", null, {
+        params: { folderPath },
       });
-      if (response.status === 200) {
-        setSuccessMessage("Folder processed successfully!");
-      }
+      setSuccessMessage(response.data.message || "Folder processed successfully!");
     } catch (err) {
-      setError("Error processing folder.");
+      setError(err.response?.data?.message || "Error processing folder.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // API call to get metadata for the specified path and type
   const fetchMetadata = async () => {
     setLoading(true);
-    setError("");
-    setSuccessMessage("");
-    setMetadata([]);
+    resetStates(); // Clear metadata and reset state
     try {
-      if (!fetchPath) {
-        setError("Please enter a folder path to fetch metadata.");
-        setLoading(false);
-        return;
-      }
-      const response = await axios.get('http://localhost:8080/api/files/metadata', {
-        params: { folderPath: fetchPath, type: metadataType }
+      if (!fetchPath) throw new Error("Path is required.");
+      const response = await axios.get("http://localhost:8080/api/files/metadata", {
+        params: { folderPath: fetchPath, type: metadataType },
       });
-
-      console.log("Raw Backend Response:", response.data);
-
-      // Handling Basic Metadata
-      if (metadataType === "basic") {
-        if (response.data && response.data.length > 0) {
-          const mappedMetadata = response.data.map((file) => ({
-            fileName: file.name || "Unknown File",
-            filePath: file.path || "Unknown Path",
-            size: file.size ? `${file.size} bytes` : "Unknown Size",
-            ctime: file.ctime ? new Date(file.ctime).toLocaleString() : "N/A",
-            mtime: file.mtime ? new Date(file.mtime).toLocaleString() : "N/A",
-            atime: file.atime ? new Date(file.atime).toLocaleString() : "N/A",
-          }));
-          setMetadata(mappedMetadata);
-        } else {
-          setError("No basic metadata found for the specified folder path.");
-        }
-      }
-
-      // Handling Advanced Metadata
-      if (metadataType === "advanced") {
-        if (response.data && response.data.length > 0) {
-          const mappedMetadata = response.data.map((file) => ({
-            fileName: file.fileName || "Unknown File",
-            filePath: file.filePath || "Unknown Path",
-            metadataMap: file.metadataMap || {}, // Include metadata map for advanced metadata
-          }));
-          setMetadata(mappedMetadata);
-        } else {
-          setError("No advanced metadata found for the specified folder path.");
-        }
-      }
+      setMetadata(response.data);
     } catch (err) {
-      setError("Error fetching metadata.");
+      setError(err.response?.data?.message || "Error fetching metadata.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  // API call to delete metadata for the specified folder
   const deleteMetadata = async () => {
     setLoading(true);
-    setError("");
-    setSuccessMessage("");
+    resetStates();
     try {
-      if (!deletePath) {
-        setError("Please enter a folder path to delete metadata.");
-        setLoading(false);
-        return;
-      }
-      const response = await axios.delete('http://localhost:8080/api/files/reset-index', {
-        params: { folderPath: deletePath }
+      if (!deletePath) throw new Error("Path is required.");
+      await axios.delete("http://localhost:8080/api/files/reset-index", {
+        params: { folderPath: deletePath },
       });
-      if (response.status === 200) {
-        setSuccessMessage("Metadata deleted successfully!");
-      }
+      setSuccessMessage("Metadata deleted successfully!");
     } catch (err) {
-      console.error("Error deleting metadata:", err.response || err);
-      if (err.response && err.response.status === 500) {
-        setError(
-          `Error deleting metadata. Server responded with: ${
-            err.response.data || "Internal Server Error"
-          }`
-        );
-      } else {
-        setError("Error deleting metadata. Please check the folder path and try again.");
-      }
+      setError(err.response?.data?.message || "Error deleting metadata.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
+
+  const toggleRow = (index) => {
+    setExpandedRows(prev => 
+      prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]
+    );
+  };
+
+  const renderBasicMetadataTable = () => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>File Path</th>
+            <th>File Name</th>
+            <th>Size</th>
+            <th>Created Time</th>
+            <th>Modified Time</th>
+            <th>Access Time</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metadata.map((item, index) => (
+            <tr key={index}>
+              <td>{item.id}</td>
+              <td>{item.path}</td> {/* File Path */}
+              <td>{item.name}</td> {/* File Name */}
+              <td>{item.size}</td>
+              <td>{item.ctime}</td>
+              <td>{item.mtime}</td>
+              <td>{item.atime}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const renderAdvancedMetadataTable = () => {
+    return (
+      <table>
+        <thead>
+          <tr>
+            <th>File Name</th>
+            <th>Metadata</th>
+          </tr>
+        </thead>
+        <tbody>
+          {metadata.map((item, index) => (
+            <React.Fragment key={index}>
+              <tr>
+                <td>{item.fileName}</td> {/* Elasticsearch filename */}
+                <td>
+                  <button onClick={() => toggleRow(index)}>
+                    {expandedRows.includes(index) ? "Hide Metadata" : "View Metadata"}
+                  </button>
+                </td>
+              </tr>
+              {expandedRows.includes(index) && (
+                <tr>
+                  <td colSpan="2">
+                    <div style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+                      {Object.entries(item.metadataMap).map(([key, value]) => (
+                        <div key={key}><strong>{key}:</strong> {value}</div>
+                      ))}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </React.Fragment>
+          ))}
+        </tbody>
+      </table>
+    );
+  };
+
+  const renderPieChart = (data, label) => (
+    <Pie
+      data={{
+        labels: Object.keys(data),
+        datasets: [
+          {
+            data: Object.values(data),
+            backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56"],
+          },
+        ],
+      }}
+      options={{
+        responsive: true,
+        plugins: {
+          legend: {
+            position: "top",
+          },
+        },
+      }}
+    />
+  );
+
+  const renderBarChart = (data, label) => (
+    <Bar
+      data={{
+        labels: Object.keys(data),
+        datasets: [
+          {
+            label,
+            data: Object.values(data),
+            backgroundColor: "#36A2EB",
+          },
+        ],
+      }}
+      options={{
+        responsive: true,
+        plugins: {
+          legend: {
+            display: false,
+          },
+        },
+      }}
+    />
+  );
 
   return (
     <div className="App">
       <h1>File Insights</h1>
-
-      {/* Tabs Navigation */}
       <div className="tabs">
-        <button
-          className={`tab ${activeTab === "process" ? "active" : ""}`}
-          onClick={() => setActiveTab("process")}
-        >
-          Process Folder
-        </button>
-        <button
-          className={`tab ${activeTab === "metadata" ? "active" : ""}`}
-          onClick={() => setActiveTab("metadata")}
-        >
-          Find Metadata
-        </button>
-        <button
-          className={`tab ${activeTab === "delete" ? "active" : ""}`}
-          onClick={() => setActiveTab("delete")}
-        >
-          Delete Metadata
-        </button>
+        {["process", "metadata", "delete", "analytics"].map((tab) => (
+          <button
+            key={tab}
+            className={`tab ${activeTab === tab ? "active" : ""}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab.charAt(0).toUpperCase() + tab.slice(1)}
+          </button>
+        ))}
       </div>
-
-      {/* Tab Content */}
       <div className="tab-content">
-        {/* Process Folder Tab */}
         {activeTab === "process" && (
           <div>
-            <h2>Process Folder</h2>
+            <h3>Process Folder</h3>
             <input
               type="text"
-              value={folderPath}
-              onChange={handleFolderPathChange}
               placeholder="Enter folder path"
+              value={folderPath}
+              onChange={(e) => setFolderPath(e.target.value)}
             />
             <button onClick={processFolder} disabled={loading}>
               {loading ? "Processing..." : "Process Folder"}
             </button>
-            {successMessage && <div className="success">{successMessage}</div>}
-            {error && <div className="error">{error}</div>}
           </div>
         )}
-
-        {/* Find Metadata Tab */}
         {activeTab === "metadata" && (
           <div>
-            <h2>Find Metadata</h2>
+            <h3>Find Metadata</h3>
             <input
               type="text"
+              placeholder="Enter path to fetch metadata"
               value={fetchPath}
-              onChange={handleFetchPathChange}
-              placeholder="Enter folder path to find metadata"
+              onChange={(e) => setFetchPath(e.target.value)}
             />
             <div>
               <label>
                 <input
                   type="radio"
+                  name="metadataType"
                   value="basic"
                   checked={metadataType === "basic"}
                   onChange={() => setMetadataType("basic")}
                 />
-                Basic Metadata (MySQL)
+                Basic Metadata
               </label>
               <label>
                 <input
                   type="radio"
+                  name="metadataType"
                   value="advanced"
                   checked={metadataType === "advanced"}
                   onChange={() => setMetadataType("advanced")}
                 />
-                Advanced Metadata (Elasticsearch)
+                Advanced Metadata
               </label>
             </div>
             <button onClick={fetchMetadata} disabled={loading}>
               {loading ? "Fetching..." : "Find Metadata"}
             </button>
-            {error && <div className="error">{error}</div>}
-            {successMessage && <div className="success">{successMessage}</div>}
-
-            {/* Render Metadata Table */}
-            {metadata.length > 0 && (
-              <div>
-                <h3>{metadataType === "basic" ? "Basic Metadata" : "Advanced Metadata"}</h3>
-                <table className="metadata-table">
-                  <thead>
-                    <tr>
-                      <th>File Name</th>
-                      <th>File Path</th>
-                      {metadataType === "basic" && (
-                        <>
-                          <th>Size</th>
-                          <th>Created</th>
-                          <th>Modified</th>
-                          <th>Accessed</th>
-                        </>
-                      )}
-                      {metadataType === "advanced" && <th>Metadata</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {metadata.map((file, index) => (
-                      <tr key={index}>
-                        <td>{file.fileName || file.name || "Unknown File"}</td>
-                        <td>{file.filePath || file.path || "Unknown Path"}</td>
-                        {metadataType === "basic" && (
-                          <>
-                            <td>{file.size}</td>
-                            <td>{file.ctime}</td>
-                            <td>{file.mtime}</td>
-                            <td>{file.atime}</td>
-                          </>
-                        )}
-                        {metadataType === "advanced" && (
-                          <td>
-                            {file.metadataMap && Object.keys(file.metadataMap).length > 0 ? (
-                              <ul>
-                                {Object.entries(file.metadataMap).map(([key, value], idx) => (
-                                  <li key={idx}>
-                                    <strong>{key}:</strong> {value || "N/A"}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              "No metadata available"
-                            )}
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+            {metadata.length > 0 ? (
+              metadataType === "basic" ? renderBasicMetadataTable() : renderAdvancedMetadataTable()
+            ) : (
+              <p>No metadata available.</p>
             )}
           </div>
         )}
-
-        {/* Delete Metadata Tab */}
         {activeTab === "delete" && (
           <div>
-            <h2>Delete Metadata</h2>
+            <h3>Delete Metadata</h3>
             <input
               type="text"
+              placeholder="Enter path to delete metadata"
               value={deletePath}
-              onChange={handleDeletePathChange}
-              placeholder="Enter folder path to delete metadata"
+              onChange={(e) => setDeletePath(e.target.value)}
             />
             <button onClick={deleteMetadata} disabled={loading}>
               {loading ? "Deleting..." : "Delete Metadata"}
             </button>
-            {successMessage && <div className="success">{successMessage}</div>}
-            {error && <div className="error">{error}</div>}
           </div>
         )}
+        {activeTab === "analytics" && (
+          <div>
+            <h3>File Age Distribution</h3>
+            {Object.keys(fileAgeData).length > 0 ? (
+              renderBarChart(fileAgeData, "File Age")
+            ) : (
+              <p>No data available for File Age</p>
+            )}
+            <h3>File Type Distribution</h3>
+            {Object.keys(fileTypeData).length > 0 ? (
+              renderPieChart(fileTypeData, "File Types")
+            ) : (
+              <p>No data available for File Types</p>
+            )}
+          </div>
+        )}
+        {successMessage && <p className="success">{successMessage}</p>}
+        {error && <p className="error">{error}</p>}
       </div>
     </div>
   );
