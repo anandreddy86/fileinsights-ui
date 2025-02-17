@@ -29,6 +29,13 @@ function App() {
   const [successMessage, setSuccessMessage] = useState("");
   const [expandedRows, setExpandedRows] = useState([]);
 
+  // Data Sources State
+  const [nfsHost, setNfsHost] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [sharePath, setSharePath] = useState('');
+  const [savedCredentials, setSavedCredentials] = useState([]);
+
   const fetchAnalyticsData = useCallback(async () => {
     setLoading(true);
     resetStates();
@@ -113,6 +120,19 @@ function App() {
     );
   };
 
+  // Handle Data Source Saving
+  const handleSaveCredentials = () => {
+    const newCredentials = { nfsHost, username, password, sharePath };
+    setSavedCredentials([...savedCredentials, newCredentials]);
+    // Optional: Persist these credentials in localStorage or send to backend
+  };
+
+  const handleRemoveCredential = (index) => {
+    const updatedCredentials = savedCredentials.filter((_, i) => i !== index);
+    setSavedCredentials(updatedCredentials);
+  };
+
+  // Tables for metadata
   const renderBasicMetadataTable = () => {
     return (
       <table>
@@ -131,8 +151,8 @@ function App() {
           {metadata.map((item, index) => (
             <tr key={index}>
               <td>{item.id}</td>
-              <td>{item.path}</td> {/* File Path */}
-              <td>{item.name}</td> {/* File Name */}
+              <td>{item.path}</td>
+              <td>{item.name}</td>
               <td>{item.size}</td>
               <td>{item.ctime}</td>
               <td>{item.mtime}</td>
@@ -157,7 +177,7 @@ function App() {
           {metadata.map((item, index) => (
             <React.Fragment key={index}>
               <tr>
-                <td>{item.fileName}</td> {/* Elasticsearch filename */}
+                <td>{item.fileName}</td>
                 <td>
                   <button onClick={() => toggleRow(index)}>
                     {expandedRows.includes(index) ? "Hide Metadata" : "View Metadata"}
@@ -182,6 +202,7 @@ function App() {
     );
   };
 
+  // Render Pie and Bar charts
   const renderPieChart = (data, label) => (
     <Pie
       data={{
@@ -231,7 +252,7 @@ function App() {
     <div className="App">
       <h1>File Insights</h1>
       <div className="tabs">
-        {["process", "metadata", "delete", "analytics"].map((tab) => (
+        {["process", "metadata", "delete", "analytics", "datasources"].map((tab) => (
           <button
             key={tab}
             className={`tab ${activeTab === tab ? "active" : ""}`}
@@ -241,7 +262,9 @@ function App() {
           </button>
         ))}
       </div>
+
       <div className="tab-content">
+        {/* Process Tab */}
         {activeTab === "process" && (
           <div>
             <h3>Process Folder</h3>
@@ -256,6 +279,8 @@ function App() {
             </button>
           </div>
         )}
+
+        {/* Metadata Tab */}
         {activeTab === "metadata" && (
           <div>
             <h3>Find Metadata</h3>
@@ -297,6 +322,8 @@ function App() {
             )}
           </div>
         )}
+
+        {/* Delete Tab */}
         {activeTab === "delete" && (
           <div>
             <h3>Delete Metadata</h3>
@@ -311,6 +338,8 @@ function App() {
             </button>
           </div>
         )}
+
+        {/* Analytics Tab */}
         {activeTab === "analytics" && (
           <div>
             <h3>File Age Distribution</h3>
@@ -327,6 +356,67 @@ function App() {
             )}
           </div>
         )}
+
+        {/* DataSources Tab */}
+        {activeTab === "datasources" && (
+          <div>
+            <h2>Data Sources</h2>
+            <div>
+              <label>
+                NFS/SMB Host:
+                <input
+                  type="text"
+                  value={nfsHost}
+                  onChange={(e) => setNfsHost(e.target.value)}
+                  placeholder="Enter NFS/SMB Host"
+                />
+              </label>
+              <label>
+                Username:
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter Username"
+                />
+              </label>
+              <label>
+                Password:
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter Password"
+                />
+              </label>
+              <label>
+                Share Path:
+                <input
+                  type="text"
+                  value={sharePath}
+                  onChange={(e) => setSharePath(e.target.value)}
+                  placeholder="Enter Share Path"
+                />
+              </label>
+              <button onClick={handleSaveCredentials}>Save Credentials</button>
+            </div>
+
+            <div>
+              <h3>Saved Credentials</h3>
+              {savedCredentials.length > 0 ? (
+                savedCredentials.map((cred, index) => (
+                  <div key={index}>
+                    <p>{cred.nfsHost}</p>
+                    <button onClick={() => handleRemoveCredential(index)}>Remove</button>
+                  </div>
+                ))
+              ) : (
+                <p>No saved credentials.</p>
+              )}
+            </div>
+          </div>
+        )}
+
         {successMessage && <p className="success">{successMessage}</p>}
         {error && <p className="error">{error}</p>}
       </div>

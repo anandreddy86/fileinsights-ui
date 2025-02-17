@@ -10,21 +10,21 @@ body {
 
 h1 {
   text-align: center;
-  margin: 20px 0;
+  margin: 30px 0;
   font-size: 2.5rem;
   color: #444;
 }
 
 h2 {
   font-size: 2rem;
-  margin: 20px 0;
+  margin: 30px 0;
   text-align: center;
   color: #555;
 }
 
 h3 {
   font-size: 1.5rem;
-  margin: 20px 0;
+  margin: 25px 0;
   text-align: center;
   color: #666;
 }
@@ -32,17 +32,125 @@ h3 {
 .container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 30px;
   box-sizing: border-box;
 }
 
-/* Navigation Tabs */
-button {
-  padding: 10px 20px;
-  margin: 0 10px;
-  border: none;
+/* Data Source Section Styles */
+.data-source-section {
+  margin: 30px auto;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 800px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.data-source-section input {
+  margin-bottom: 18px;
+  width: 100%;
+  padding: 12px;
+  font-size: 1.1rem;
   border-radius: 5px;
+  border: 1px solid #ddd;
+  box-sizing: border-box;
+  max-width: 600px; /* Limit the width to a reasonable size */
+}
+
+/* Folder Path Input Section */
+.folder-path-section {
+  margin-bottom: 30px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.folder-path-section input[type="text"] {
+  width: 80%;
+  padding: 15px;
+  font-size: 1.1rem;
+  margin-bottom: 15px;
+  border-radius: 5px;
+  border: 1px solid #ddd;
+  max-width: 600px; /* Increase the width */
+}
+
+.folder-path-section button {
+  width: 100%;
+  max-width: 600px; /* Button width aligned with the input field */
+  padding: 15px;
+  font-size: 1.1rem;
+  background-color: #007bff;
+  color: white;
+  border-radius: 5px;
+  margin-top: 10px;
+}
+
+.folder-path-section button:hover {
+  background-color: #0056b3;
+}
+
+/* Label and Input Alignment */
+.data-source-section div {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+  width: 100%;
+}
+
+.data-source-section label {
   font-size: 1rem;
+  margin-bottom: 5px;
+  text-align: left;
+  display: block;
+  width: 100%;
+}
+
+/* Save Credentials Button Styling */
+button.save-credentials {
+  background-color: #28a745;
+  margin-top: 15px;
+  padding: 14px 25px;
+  width: 100%;
+  font-size: 1.2rem;
+}
+
+button.save-credentials:hover {
+  background-color: #218838;
+}
+
+/* Saved Credentials Section */
+.saved-credentials-list {
+  margin-top: 20px;
+}
+
+.saved-credentials-list p {
+  background-color: #e9ecef;
+  padding: 12px;
+  border-radius: 5px;
+  margin-bottom: 15px;
+}
+
+.saved-credentials-list button {
+  background-color: #dc3545;
+  margin-left: 10px;
+}
+
+.saved-credentials-list button:hover {
+  background-color: #c82333;
+}
+
+/* Button Styling */
+button {
+  padding: 12px 25px;
+  margin: 10px 15px;
+  border: none;
+  border-radius: 6px;
+  font-size: 1.1rem;
   background-color: #007bff;
   color: white;
   cursor: pointer;
@@ -60,106 +168,16 @@ button.active {
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-/* Input Field */
-input[type="text"],
-input[type="search"] {
-  width: 80%;
-  padding: 12px;
-  margin: 10px auto;
-  border-radius: 5px;
-  border: 1px solid #ddd;
-  font-size: 1rem;
-  display: block;
-  max-width: 600px;
-}
-
-/* Aligning the radio buttons */
-.metadata-options {
-  display: flex;
-  justify-content: space-evenly;
-  margin-bottom: 20px;
-}
-
-.metadata-options label {
-  font-size: 1rem;
-}
-
-/* Table Styles */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-top: 20px;
-}
-
-table, th, td {
-  border: 1px solid #ddd;
-}
-
-th, td {
-  padding: 12px;
-  text-align: left;
-  font-size: 1rem;
-}
-
-th {
-  background-color: #f4f4f4;
-  color: #333;
-}
-
-tr:nth-child(even) {
-  background-color: #f9f9f9;
-}
-
-tr:hover {
-  background-color: #e9ecef;
-}
-
-/* Responsive Table */
-@media (max-width: 768px) {
-  table {
-    font-size: 0.9rem;
-  }
-
-  th, td {
-    padding: 8px;
-  }
-
-  input[type="text"],
-  input[type="search"] {
-    font-size: 0.9rem;
-    width: 100%;
-  }
-
-  button {
-    font-size: 1rem;
-    width: 100%;
-  }
-}
-
-/* Chart Styling */
-canvas {
-  max-width: 100%;
-  margin: 20px auto;
-}
-
-/* Responsive Design for Charts */
-@media (max-width: 768px) {
-  canvas {
-    max-width: 95%;
-    height: auto;
-  }
-}
-
 /* Footer */
 footer {
   text-align: center;
-  padding: 10px 0;
+  padding: 15px 0;
   background-color: #007bff;
   color: white;
   position: fixed;
   width: 100%;
   bottom: 0;
-  font-size: 0.9rem;
+  font-size: 1rem;
 }
 
 /* Accessibility Enhancements */
